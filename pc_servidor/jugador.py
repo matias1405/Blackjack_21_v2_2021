@@ -1,8 +1,7 @@
-from usuario import *
-
-class Jugador(Usuario):
-
+class Jugador():
     def __init__(self):
+        self.nombre_de_usuario = ' '
+        self.nombre = ' '
         self.puntos = 0
         self.estado = True
         self.cartas_obt = []
@@ -10,7 +9,7 @@ class Jugador(Usuario):
 
     def iniciarSesion(self):
         self.nombre_de_usuario = input("Ingrese su nombre de usuario: ")
-        
+        self.nombre = input("Ingrese su nombre: ")
     def calcularPuntos(self):
         self.puntos = 0
         for n in range(len(self.cartas_obt)):
@@ -26,7 +25,6 @@ class Jugador(Usuario):
             self.estado = False
         else:
             pass
-          
     def robarCarta(self, carta, valor, tipo):
         self.cartas_obt.append(valor)
         print(carta, " de ", tipo)

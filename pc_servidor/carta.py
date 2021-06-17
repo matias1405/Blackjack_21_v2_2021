@@ -1,5 +1,4 @@
 class Carta():
-  
     def __init__(self, n, t, i):
         self.numero = n
         if(self.numero >= 10):
