@@ -3,7 +3,6 @@ from jugador import *
 from carta import *
 import random
 import socket
-import sys
 
 #funcion para mezclar las cartas
 def mezclar_cartas(carta):
@@ -21,7 +20,7 @@ def mezclar_cartas(carta):
 def recibirDatos()):
     dato_recibido = b''
     while len(dato_recibido) == 0
-        dato_recibido = connection.recv(16)
+        dato_recibido = connection.recv(128)
     dato = dato_recibido.decode()
     return dato
 
@@ -124,8 +123,6 @@ def crear_partida(cant_jug_part_actual):
 ################################################################################
 # Creacion de un socket TCP/IP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# Bind the socket to the port
-server_address = ('localhost', 10000)
 #condiciones iniciales para la primera partida
 print("Bienvenidos")
 #creamos las cartas
@@ -136,6 +133,12 @@ for x in range(52):
 #eleccion de la cantidad de jugadores
 cant_jug_part_actual = int(input("Elija el numero de jugadores de la partida \n"))
 if(cant_jug_part_actual == 2):
+    #obtenemos la iplocal de esta pc
+    ip = socket.gethostbyname(socket.gethostname())
+    print("Introduzca la siguiente direccion en la otra PC: ", ip)
+    ip_cliente = input("Introduzca la direccion ip dada por la otra PC: ")
+    # Bind the socket to the port
+    server_address = (ip_cliente, 10000)
     print("starting up on ", server_address(0), " port ", server_address(1))
     sock.bind(server_address)
     # Listen for incoming connections
