@@ -17,22 +17,29 @@ def mezclar_cartas(carta):
     return list_temporal
 
 #funcion para recibir datos
-def recibirDatos()):
+#recibe un dato del cliente y lo devuelve decodificado
+def recibirDatos():
     dato_recibido = b''
-    while len(dato_recibido) == 0
-        dato_recibido = connection.recv(128)
-    dato = dato_recibido.decode()
-    return dato
+    dato_recibido = connection.recv(128)
+    return dato_recibido.decode()
 
 #funcion para enviar datos
-#primero espera un msj del cliente solicitando un dato y luego envia
+#primero espera un msj del cliente solicitando un dato
+#se compara y se responde si es el dato esperado o no
+#si es la peticion esperada se envia el dato que solicito el cliente
 def enviarDatos(dato_esperado, dato_a_enviar):
     dato_a_enviar = str(dato_a_enviar)
     dato = ""
-    while (dato != dato_esperado):
+    while (True):
         dato = recibirDatos()
-    dato_codif = dato_a_enviar.encode()
-    connection.sendall(dato_codif)
+        if(dato == dato_esperado):
+            respuesta = "si"
+            connection.send(respuesta.encode())
+            break
+        else:
+            respuesta = "no"
+            connection.send(respuesta.encode())
+    connection.send(dato_a_enviar.encode())
 
 #funcion para jugar una partida
 #solo se necesita como parametro el numero de jugadores
@@ -42,7 +49,7 @@ def crear_partida(cant_jug_part_actual):
     cartas_mez = mezclar_cartas(carta)
     print(cartas_mez)
     #Creamos la partida y el jugador "casa"
-    partida_actual = Partida()
+    partida_actual = Partida(1, True)
     casa = Jugador()
     casa.nombre_de_usuario = "Casa00"
     casa.nombre = "Casa"
@@ -56,6 +63,7 @@ def crear_partida(cant_jug_part_actual):
         jugador.append(Jugador())
         jugador[1].nombre_de_usuario = recibirDatos()
         jugador[1].nombre = recibirDatos()
+        #se envia el nombre del jugador que juega en la pc servidor
         enviarDatos("nombre0", jugador[0].nombre)
 
     print("=================================================================")
@@ -112,10 +120,12 @@ def crear_partida(cant_jug_part_actual):
             elif(jugador[x].puntos > casa.puntos):
                 print(jugador[x].nombre_de_usuario, " ganaste.")
             else:
-                print(jugador[x].nombre_de_usuario, " perdiste.")
-    print("¿Desea volver a jugar? Introducza 'y' o 'n'")
-    volver_a_jugar = input()
-    if(volver_a_jugar == y):
+                if(casa.puntos > 21):
+                    print(jugador[x].nombre, " ganaste")
+                else:
+                    print(jugador[x].nombre_de_usuario, " perdiste.")
+    partida_actual.preguntarOtraPartida()
+    if(partida_actual.estado):
         crear_partida(cant_jug_part_actual)
 
 ################################################################################
@@ -150,7 +160,7 @@ if(cant_jug_part_actual == 2):
     try:
         crear_partida(cant_jug_part_actual)
     finally:
-        # Clean up the connection
+        # cerramos la conexion
         connection.close()
 else:
     crear_partida(cant_jug_part_actual)
