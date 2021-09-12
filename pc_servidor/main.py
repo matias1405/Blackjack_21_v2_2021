@@ -16,6 +16,7 @@ def mezclar_cartas(carta):
         list_temporal[cont_ale] = temporal
     return list_temporal
 
+
 #funcion para recibir datos
 #recibe un dato del cliente y lo devuelve decodificado
 def recibirDatos():
@@ -85,6 +86,7 @@ def crear_partida(cant_jug_part_actual):
     indice += 1
     if(partida_actual.cant_j == 2):
         enviarDatos(casa.nombre, cartas_mez[indice-1])
+
     print("----------------------------------------------------------------")
     for x in range(partida_actual.cant_j):
         print(jugador[x].nombre_de_usuario, ":")
@@ -136,10 +138,12 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #condiciones iniciales para la primera partida
 print("Bienvenidos")
 #creamos las cartas
+
 carta = []
 for x in range(52):
     cont = x//13
     carta.append(Carta(x+1-cont*13, cont, x))
+
 #eleccion de la cantidad de jugadores
 cant_jug_part_actual = int(input("Elija el numero de jugadores de la partida \n"))
 if(cant_jug_part_actual == 2):
@@ -164,3 +168,4 @@ if(cant_jug_part_actual == 2):
         connection.close()
 else:
     crear_partida(cant_jug_part_actual)
+

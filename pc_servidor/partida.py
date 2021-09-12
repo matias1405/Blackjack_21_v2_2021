@@ -11,3 +11,4 @@ class Partida():
         else:
             print("Ingreso una opcion invalida.")
             self.preguntarOtraPartida()
+

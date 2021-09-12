@@ -2,6 +2,7 @@ class Jugador():
     def __init__(self):
         self.nombre_de_usuario = ' '
         self.nombre = ' '
+
         self.puntos = 0
         self.estado = True
         self.cartas_obt = []
@@ -25,6 +26,7 @@ class Jugador():
             self.estado = False
         else:
             pass
+
     def robarCarta(self, carta, valor, tipo):
         self.cartas_obt.append(valor)
         print(carta, " de ", tipo)
