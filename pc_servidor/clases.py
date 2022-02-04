@@ -6,10 +6,12 @@ class Jugador():
         self.estado = True
         self.cartas_obt = []
 
-
     def iniciarSesion(self):
+        print("\n-----------------------------------------------------\n")
         self.nombre_de_usuario = input("Ingrese su nombre de usuario: ")
         self.nombre = input("Ingrese su nombre: ")
+        print("\n-----------------------------------------------------\n")
+
     def calcularPuntos(self):
         self.puntos = 0
         for n in range(len(self.cartas_obt)):
@@ -62,10 +64,12 @@ class Carta():
             self.tipo = 'pica'
         self.id = i
 
+
 class Partida():
     def __init__(self, _cant_j, _estado):
         self.cant_j = _cant_j
         self.estado = _estado
+        
     def preguntarOtraPartida(self):
         print("¿Desea volver a jugar? Introducza 'y' o 'n'")
         entrada = input()
