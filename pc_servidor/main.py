@@ -1,171 +1,171 @@
-from partida import *
-from jugador import *
-from carta import *
+from clases import *
 import random
 import socket
 
-#funcion para mezclar las cartas
-def mezclar_cartas(carta):
-    list_temporal = []
-    for x in range(len(carta)):
-        list_temporal.append(carta[x].id)
-    for x in range(len(carta)):
-        cont_ale = random.randint(0,len(carta)-1)
-        temporal = list_temporal[x]
-        list_temporal[x] = list_temporal[cont_ale]
-        list_temporal[cont_ale] = temporal
-    return list_temporal
 
+def getIp():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    s.connect(('<broadcast>', 0))
+    ip = s.getsockname()[0]
+    s.close()
+    return ip
+
+#===============================================================================
+
+def cantidad_jug():
+    #eleccion de la cantidad de jugadores
+    cantidad = int(input("Elija el numero de jugadores de la partida \n"))
+    if cantidad != 2:
+        cantidad = 1
+    return cantidad
+
+#===============================================================================
 
 #funcion para recibir datos
 #recibe un dato del cliente y lo devuelve decodificado
 def recibirDatos():
-    dato_recibido = b''
     dato_recibido = connection.recv(128)
     return dato_recibido.decode()
 
+#===============================================================================
+
 #funcion para enviar datos
-#primero espera un msj del cliente solicitando un dato
-#se compara y se responde si es el dato esperado o no
-#si es la peticion esperada se envia el dato que solicito el cliente
-def enviarDatos(dato_esperado, dato_a_enviar):
-    dato_a_enviar = str(dato_a_enviar)
-    dato = ""
-    while (True):
-        dato = recibirDatos()
-        if(dato == dato_esperado):
-            respuesta = "si"
-            connection.send(respuesta.encode())
-            break
-        else:
-            respuesta = "no"
-            connection.send(respuesta.encode())
-    connection.send(dato_a_enviar.encode())
+def enviarDatos(dato):
+    connection.send(dato.encode())
+
+#===============================================================================
 
 #funcion para jugar una partida
 #solo se necesita como parametro el numero de jugadores
-def crear_partida(cant_jug_part_actual):
-    print("Iniciando la partida")
-    #Mezclamos las cartas
-    cartas_mez = mezclar_cartas(carta)
-    print(cartas_mez)
+def crear_partida(cant_jug):
+    print("\nIniciando la partida...")
     #Creamos la partida y el jugador "casa"
-    partida_actual = Partida(1, True)
+    partida = Partida(cant_jug, True)
     casa = Jugador()
     casa.nombre_de_usuario = "Casa00"
     casa.nombre = "Casa"
-    partida_actual.cant_j = cant_jug_part_actual
-    jugador = []
+    #Mezclamos las cartas
+    random.shuffle(mazo)
+    lista_jug = []
     #creamos el jugador de la pc servidor
-    jugador.append(Jugador())
-    jugador[0].iniciarSesion()
+    lista_jug.append(Jugador())
+    lista_jug[0].iniciarSesion()
     #si son dos jugadores pedimos los datos al jugador de la pc cliente
-    if(partida_actual.cant_j == 2):
-        jugador.append(Jugador())
-        jugador[1].nombre_de_usuario = recibirDatos()
-        jugador[1].nombre = recibirDatos()
+    if(partida.cant_j == 2):
         #se envia el nombre del jugador que juega en la pc servidor
-        enviarDatos("nombre0", jugador[0].nombre)
+        enviarDatos(f'usuario {lista_jug[0].nombre_de_usuario}')
+        enviarDatos(f'nombre {lista_jug[0].nombre}')
+        lista_jug.append(Jugador())
+        enviarDatos('usuario2')
+        lista_jug[1].nombre_de_usuario = recibirDatos()
+        enviarDatos('nombre2')
+        lista_jug[1].nombre = recibirDatos()
+    lista_jug.append(casa)
 
-    print("=================================================================")
-    #roba primera carta el jugador de la pc servidor
-    indice = 0
-    print(jugador[0].nombre , ":")
-    jugador[0].robarCarta(carta[cartas_mez[indice]].numero, carta[cartas_mez[indice]].valor, carta[cartas_mez[indice]].tipo)
-    indice += 1
-    #si existe, roba la primera carta el jugador de la pc cliente
-    if(partida_actual.cant_j == 2):
-        enviarDatos(jugador[0].nombre, cartas_mez[indice-1])
-        print(jugador[1].nombre , ":")
-        jugador[1].robarCarta(carta[cartas_mez[indice]].numero, carta[cartas_mez[indice]].valor, carta[cartas_mez[indice]].tipo)
-        indice += 1
-        enviarDatos(jugador[1].nombre, cartas_mez[indice-1])
-    #roba la primera carta la casa
-    print(casa.nombre, ":")
-    casa.robarCarta(carta[cartas_mez[indice]].numero, carta[cartas_mez[indice]].valor, carta[cartas_mez[indice]].tipo)
-    indice += 1
-    if(partida_actual.cant_j == 2):
-        enviarDatos(casa.nombre, cartas_mez[indice-1])
-
-    print("----------------------------------------------------------------")
-    for x in range(partida_actual.cant_j):
-        print(jugador[x].nombre_de_usuario, ":")
-        jugador[x].robarCarta(carta[cartas_mez[indice]].numero, carta[cartas_mez[indice]].valor, carta[cartas_mez[indice]].tipo)
-        print("Su puntaje es: ", jugador[x].puntos)
-        indice += 1
-    print("----------------------------------------------------------------")
-    for x in range(partida_actual.cant_j):
-        if(jugador[x].estado == True):
-            print(jugador[x].nombre_de_usuario, ":")
-            while(jugador[x].estado):
-                jugador[x].seguirJugando()
-                if(jugador[x].estado == False):
-                    break
-                jugador[x].robarCarta(carta[cartas_mez[indice]].numero, carta[cartas_mez[indice]].valor, carta[cartas_mez[indice]].tipo)
-                indice += 1
-                print("Su puntaje es: ", jugador[x].puntos)
-        print("-------------------------------------------------------------")
-    print(casa.nombre_de_usuario, ":")
+    #roba primera carta cada jugador y la casa
+    ind = 0
+    ind = repartir_carta(lista_jug, ind, cant_jug, False)
+    #roba la segunda carta cada jugador pero no la casa
+    ind = repartir_carta(lista_jug[:-1], ind, cant_jug)
+    #continua el juego jugador de la pc servidor
+    while(lista_jug[0].estado):
+        lista_jug[0].seguirJugando()
+        if(lista_jug[0].estado == False):
+            break
+        ind = repartir_carta(lista_jug[0], ind, cant_jug)
+    #juega si existe el jugador de la pc ip_cliente
+    if cant_jug == 2:
+        while(lista_jug[1].estado):
+            enviarDatos('seguirjugando')
+            estado_jugador = recibirDatos()
+            if estado_jugador == 'n':
+                lista_jug[1].estado = False
+                break
+            ind = repartir_carta(lista_jug[1], ind, cant_jug)
+    #juega la casa, la casa se planta de obtener mas de 16
     while(casa.estado):
-        casa.robarCarta(carta[cartas_mez[indice]].numero, carta[cartas_mez[indice]].valor, carta[cartas_mez[indice]].tipo)
-        indice += 1
-        print("El puntaje de la casa es: ", casa.puntos)
+        ind = repartir_carta(lista_jug[-1], ind, cant_jug)
         if(casa.puntos > 16):
             casa.estado = False
-    print("-------------------------------------------------------------")
-    for x in range(partida_actual.cant_j):
-        if(jugador[x].puntos > 21):
-            print(jugador[x].nombre_de_usuario, " perdiste.")
+
+    #mostramos los resultados otenidos
+    resultados(lista_jug[:-1], casa)
+    partida.preguntarOtraPartida()
+    if(partida.estado):
+        crear_partida(partida.cant_j)
+
+#===============================================================================
+
+def repartir_carta(lista, ind, cant_jug, mostrar_puntaje = True):
+    if type(lista) is not list:
+        lista = [lista]
+    for jugador in lista:
+        print(f'{jugador.nombre} :')
+        jugador.robarCarta(mazo[ind].numero, mazo[ind].valor, mazo[ind].tipo)
+        if(cant_jug == 2):
+            enviarDatos(f'{jugador.nombre_de_usuario} {mazo[ind].id}')
+        if mostrar_puntaje:
+            print(f'El puntaje de {jugador.nombre} es {jugador.puntos}')
+        ind += 1
+        print("\n-----------------------------------------------------------\n")
+    return ind
+
+#===============================================================================
+
+def resultados(lista_jug, casa):
+    print("\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n")
+    for jugador in lista_jug:
+        if(jugador.puntos > 21):
+            print(jugador.nombre, "perdió.\n")
+        elif(jugador == 21):
+            print(jugador.nombre, "hizo BLACKJACK.\n")
+        elif(jugador.puntos == casa.puntos):
+            print(jugador.nombre, "empató.\n")
+        elif(jugador.puntos > casa.puntos):
+            print(jugador.nombre, "ganó.\n")
+        elif(casa.puntos > 21):
+            print(jugador.nombre, "ganó.\n")
         else:
-            if(jugador[x].puntos == casa.puntos):
-                print(jugador[x].nombre_de_usuario, " empataste.")
-            elif(jugador[x].puntos > casa.puntos):
-                print(jugador[x].nombre_de_usuario, " ganaste.")
-            else:
-                if(casa.puntos > 21):
-                    print(jugador[x].nombre, " ganaste")
-                else:
-                    print(jugador[x].nombre_de_usuario, " perdiste.")
-    partida_actual.preguntarOtraPartida()
-    if(partida_actual.estado):
-        crear_partida(cant_jug_part_actual)
+            print(jugador.nombre, "perdió.\n")
 
 ################################################################################
 #PROGRAMA PRINCIPAL
 ################################################################################
-# Creacion de un socket TCP/IP
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#condiciones iniciales para la primera partida
-print("Bienvenidos")
-#creamos las cartas
 
-carta = []
-for x in range(52):
-    cont = x//13
-    carta.append(Carta(x+1-cont*13, cont, x))
+if __name__ == '__main__':
+    print("**************************************")
+    print("\nBIENVENIDO AL BLACKJACK 21 V2\n")
+    print("**************************************\n")
+    #creamos las cartas
+    mazo = []
+    for x in range(52):
+        cont = x//13
+        mazo.append(Carta(x+1-cont*13, cont, x))
 
-#eleccion de la cantidad de jugadores
-cant_jug_part_actual = int(input("Elija el numero de jugadores de la partida \n"))
-if(cant_jug_part_actual == 2):
-    #obtenemos la iplocal de esta pc
-    ip = socket.gethostbyname(socket.gethostname())
-    print("Introduzca la siguiente direccion en la otra PC: ", ip)
-    ip_cliente = input("Introduzca la direccion ip dada por la otra PC: ")
-    # Bind the socket to the port
-    server_address = (ip_cliente, 10000)
-    print("starting up on ", server_address(0), " port ", server_address(1))
-    sock.bind(server_address)
-    # Listen for incoming connections
-    sock.listen(1)
-    # Wait for a connection
-    print('waiting for a connection')
-    connection, client_address = sock.accept()
-    print('connection from', client_address)
-    try:
-        crear_partida(cant_jug_part_actual)
-    finally:
-        # cerramos la conexion
-        connection.close()
-else:
-    crear_partida(cant_jug_part_actual)
+    cant_jugagores = cantidad_jug()
 
+    if(cant_jugagores == 2):
+        #obtenemos la iplocal de esta pc
+        ip = getIp()
+        # Creacion de un socket TCP/IP
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("Introduzca la siguiente direccion en la otra PC: ", ip)
+        ip_cliente = input("Introduzca la direccion ip dada por la otra PC: ")
+        # Bind the socket to the port
+        server_address = (ip_cliente, 10000)
+        print("starting up on ", server_address(0), " port ", server_address(1))
+        sock.bind(server_address)
+        # Listen for incoming connections
+        sock.listen(1)
+        # Wait for a connection
+        print('waiting for a connection')
+        connection, client_address = sock.accept()
+        print('connection from', client_address)
+        try:
+            crear_partida(cant_jugagores)
+        finally:
+            # cerramos la conexion
+            connection.close()
+    else:
+        crear_partida(cant_jugagores)
