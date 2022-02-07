@@ -53,6 +53,7 @@ def crear_partida(cant_jug):
     lista_jug[0].iniciarSesion()
     #si son dos jugadores pedimos los datos al jugador de la pc cliente
     if(partida.cant_j == 2):
+        enviarDatos('inicio')
         #se envia el nombre del jugador que juega en la pc servidor
         enviarDatos(f'usuario {lista_jug[0].nombre_de_usuario}')
         enviarDatos(f'nombre {lista_jug[0].nombre}')
@@ -88,12 +89,18 @@ def crear_partida(cant_jug):
         ind = repartir_carta(lista_jug[-1], ind, cant_jug)
         if(casa.puntos > 16):
             casa.estado = False
-
-    #mostramos los resultados otenidos
+    #aviso de fin del juego y muestra de reultados
+    if(cant_jug == 2):
+        enviarDatos('resultados')
+    #mostramos los resultados obtenidos
     resultados(lista_jug[:-1], casa)
+    #preguntamos si se jugará nuevamente
     partida.preguntarOtraPartida()
     if(partida.estado):
         crear_partida(partida.cant_j)
+    #aviso de fin de la conexion
+    if(cant_jug == 2):
+        enviarDatos('cerrarconexion')
 
 #===============================================================================
 
@@ -151,9 +158,9 @@ if __name__ == '__main__':
         # Creacion de un socket TCP/IP
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Introduzca la siguiente direccion en la otra PC: ", ip)
-        ip_cliente = input("Introduzca la direccion ip dada por la otra PC: ")
+        #ip_cliente = input("Introduzca la direccion ip dada por la otra PC: ")
         # Bind the socket to the port
-        server_address = (ip_cliente, 10000)
+        server_address = (ip, 10000)
         print("starting up on ", server_address(0), " port ", server_address(1))
         sock.bind(server_address)
         # Listen for incoming connections
