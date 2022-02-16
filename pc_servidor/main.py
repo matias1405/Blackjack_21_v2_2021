@@ -1,6 +1,7 @@
 from clases import *
 import random
 import socket
+import time
 
 
 def getIp():
@@ -25,14 +26,17 @@ def cantidad_jug():
 #funcion para recibir datos
 #recibe un dato del cliente y lo devuelve decodificado
 def recibirDatos():
-    dato_recibido = connection.recv(128)
+    dato_recibido = connection.recv(256)
+    #print(dato_recibido.decode())
     return dato_recibido.decode()
 
 #===============================================================================
 
 #funcion para enviar datos
 def enviarDatos(dato):
-    connection.send(dato.encode())
+    #print(dato)
+    connection.sendall(dato.encode())
+
 
 #===============================================================================
 
@@ -43,7 +47,7 @@ def crear_partida(cant_jug):
     #Creamos la partida y el jugador "casa"
     partida = Partida(cant_jug, True)
     casa = Jugador()
-    casa.nombre_de_usuario = "Casa00"
+    casa.nombre_de_usuario = "casa00"
     casa.nombre = "Casa"
     #Mezclamos las cartas
     random.shuffle(mazo)
@@ -53,9 +57,13 @@ def crear_partida(cant_jug):
     lista_jug[0].iniciarSesion()
     #si son dos jugadores pedimos los datos al jugador de la pc cliente
     if(partida.cant_j == 2):
+        enviarDatos('inicio')
+        recibirDatos()
         #se envia el nombre del jugador que juega en la pc servidor
         enviarDatos(f'usuario {lista_jug[0].nombre_de_usuario}')
+        recibirDatos()
         enviarDatos(f'nombre {lista_jug[0].nombre}')
+        recibirDatos()
         lista_jug.append(Jugador())
         enviarDatos('usuario2')
         lista_jug[1].nombre_de_usuario = recibirDatos()
@@ -70,7 +78,9 @@ def crear_partida(cant_jug):
     ind = repartir_carta(lista_jug[:-1], ind, cant_jug)
     #continua el juego jugador de la pc servidor
     while(lista_jug[0].estado):
+        print(f'{lista_jug[0].nombre} :')
         lista_jug[0].seguirJugando()
+        print("\n-----------------------------------------------------------\n")
         if(lista_jug[0].estado == False):
             break
         ind = repartir_carta(lista_jug[0], ind, cant_jug)
@@ -79,7 +89,7 @@ def crear_partida(cant_jug):
         while(lista_jug[1].estado):
             enviarDatos('seguirjugando')
             estado_jugador = recibirDatos()
-            if estado_jugador == 'n':
+            if 'n' in estado_jugador:
                 lista_jug[1].estado = False
                 break
             ind = repartir_carta(lista_jug[1], ind, cant_jug)
@@ -88,12 +98,22 @@ def crear_partida(cant_jug):
         ind = repartir_carta(lista_jug[-1], ind, cant_jug)
         if(casa.puntos > 16):
             casa.estado = False
-
-    #mostramos los resultados otenidos
+    #aviso de fin del juego y muestra de reultados
+    if(cant_jug == 2):
+        enviarDatos('resultados')
+        recibirDatos()
+    #mostramos los resultados obtenidos
     resultados(lista_jug[:-1], casa)
+    #preguntamos si se jugará nuevamente
     partida.preguntarOtraPartida()
     if(partida.estado):
         crear_partida(partida.cant_j)
+    #aviso de fin de la conexion
+    if(cant_jug == 2):
+        enviarDatos('cerrarconexion')
+        recibirDatos()
+
+
 
 #===============================================================================
 
@@ -104,7 +124,10 @@ def repartir_carta(lista, ind, cant_jug, mostrar_puntaje = True):
         print(f'{jugador.nombre} :')
         jugador.robarCarta(mazo[ind].numero, mazo[ind].valor, mazo[ind].tipo)
         if(cant_jug == 2):
-            enviarDatos(f'{jugador.nombre_de_usuario} {mazo[ind].id}')
+            enviarDatos(jugador.nombre_de_usuario)# {str(mazo[ind].id)}')
+            recibirDatos()
+            enviarDatos(str(mazo[ind].id))
+            recibirDatos()
         if mostrar_puntaje:
             print(f'El puntaje de {jugador.nombre} es {jugador.puntos}')
         ind += 1
@@ -118,7 +141,7 @@ def resultados(lista_jug, casa):
     for jugador in lista_jug:
         if(jugador.puntos > 21):
             print(jugador.nombre, "perdió.\n")
-        elif(jugador == 21):
+        elif(jugador.puntos == 21):
             print(jugador.nombre, "hizo BLACKJACK.\n")
         elif(jugador.puntos == casa.puntos):
             print(jugador.nombre, "empató.\n")
@@ -151,10 +174,10 @@ if __name__ == '__main__':
         # Creacion de un socket TCP/IP
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Introduzca la siguiente direccion en la otra PC: ", ip)
-        ip_cliente = input("Introduzca la direccion ip dada por la otra PC: ")
+        #ip_cliente = input("Introduzca la direccion ip dada por la otra PC: ")
         # Bind the socket to the port
-        server_address = (ip_cliente, 10000)
-        print("starting up on ", server_address(0), " port ", server_address(1))
+        server_address = (ip, 10000)
+        print("starting up on ", server_address[0], " port ", server_address[1])
         sock.bind(server_address)
         # Listen for incoming connections
         sock.listen(1)
@@ -167,5 +190,6 @@ if __name__ == '__main__':
         finally:
             # cerramos la conexion
             connection.close()
+            sock.close()
     else:
         crear_partida(cant_jugagores)
