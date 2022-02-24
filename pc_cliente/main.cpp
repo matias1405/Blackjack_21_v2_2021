@@ -2,8 +2,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <string>
-#include <thread>         // std::this_thread::sleep_for
-#include <chrono>         // std::chrono::seconds
+#include <thread>         
+#include <chrono>         
 #include <vector>
 #include <cstring>
 #include <netdb.h>
@@ -13,12 +13,14 @@
 
 using namespace std;
 
-//========================== definicion de clases ==============================
+//========================== variables globales ==============================
 
 int sockfd;
 char buffer_tx[255];
 char buffer_rx[255];
+vector<Carta> mazo;
 
+//========================== definicion de clases ==============================
 
 class Carta{
 public:
@@ -51,7 +53,6 @@ public:
     }
 };
 
-vector<Carta> mazo;
 
 class Jugador{
 public:
